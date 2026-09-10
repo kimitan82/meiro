@@ -111,16 +111,19 @@ h1 {
 
 .maze-wrap {
   position: relative;
-  overflow: hidden;
+  height: min(68vh, 620px);
+  overflow-y: auto;
+  overflow-x: hidden;
   border: 8px solid #dbeafe;
   border-radius: 18px;
   background: #f8fbff;
+  scrollbar-color: #93c5fd transparent;
 }
 
 #maze {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
+  height: auto;
 }
 
 .message {
