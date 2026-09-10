@@ -6,8 +6,11 @@ const messageElement = document.querySelector("#message");
 const newGameButton = document.querySelector("#new-game");
 const gameOverElement = document.querySelector("#game-over");
 const retryGameButton = document.querySelector("#retry-game");
+const gameClearElement = document.querySelector("#game-clear");
+const clearTimeElement = document.querySelector("#clear-time");
+const clearRetryButton = document.querySelector("#clear-retry");
 
-const COLUMNS = 11;
+const COLUMNS = 9;
 const ROWS = 45;
 const SCROLL_SPEED = 34;
 const directions = {
@@ -40,26 +43,35 @@ function createMaze() {
   );
 
   const start = grid[ROWS - 2][1];
-  const stack = [start];
   start.visited = true;
   start.wall = false;
-  while (stack.length) {
-    const current = stack[stack.length - 1];
-    const neighbors = Object.values(directions)
+  const frontier = [];
+  const addFrontier = (current) => {
+    Object.values(directions)
       .map((direction) => ({
         cell: grid[current.y + direction.y * 2]?.[current.x + direction.x * 2],
-        wall: grid[current.y + direction.y]?.[current.x + direction.x],
       }))
-      .filter(({ cell }) => cell && !cell.visited);
-    if (!neighbors.length) {
-      stack.pop();
-      continue;
-    }
-    const { cell: next, wall } = neighbors[Math.floor(Math.random() * neighbors.length)];
-    wall.wall = false;
+      .filter(({ cell }) => cell && !cell.visited)
+      .forEach((neighbor) => frontier.push(neighbor));
+  };
+
+  addFrontier(start);
+  while (frontier.length) {
+    const frontierIndex = Math.floor(Math.random() * frontier.length);
+    const { cell: next } = frontier.splice(frontierIndex, 1)[0];
+    if (next.visited) continue;
+
+    const visitedNeighbors = Object.values(directions)
+      .map((direction) => grid[next.y + direction.y * 2]?.[next.x + direction.x * 2])
+      .filter((cell) => cell?.visited);
+    const connectedCell = visitedNeighbors[Math.floor(Math.random() * visitedNeighbors.length)];
+    const dx = connectedCell.x - next.x;
+    const dy = connectedCell.y - next.y;
+    const connectingWall = grid[next.y + Math.sign(dy)][next.x + Math.sign(dx)];
+    connectingWall.wall = false;
     next.wall = false;
     next.visited = true;
-    stack.push(next);
+    addFrontier(next);
   }
   player = { x: 1, y: ROWS - 2 };
 }
@@ -127,7 +139,10 @@ function move(directionName) {
   if (player.x === COLUMNS - 2 && player.y === 1) {
     finished = true;
     clearInterval(timerId);
-    messageElement.textContent = `クリア！ ${formatTime(Math.floor((Date.now() - startedAt) / 1000))}`;
+    const clearTime = formatTime(Math.floor((Date.now() - startedAt) / 1000));
+    messageElement.textContent = `クリア！ ${clearTime}`;
+    clearTimeElement.textContent = `${clearTime} でゴールに到達しました`;
+    gameClearElement.classList.add("visible");
   }
 }
 
@@ -169,6 +184,7 @@ function startGame() {
   finished = false;
   lastScrollTime = undefined;
   gameOverElement.classList.remove("visible");
+  gameClearElement.classList.remove("visible");
   startedAt = Date.now();
   stepsElement.textContent = "0";
   timerElement.textContent = "00:00";
@@ -191,6 +207,7 @@ document.querySelectorAll(".control-button").forEach((button) => {
 });
 newGameButton.addEventListener("click", startGame);
 retryGameButton.addEventListener("click", startGame);
+clearRetryButton.addEventListener("click", startGame);
 window.addEventListener("resize", resizeCanvas);
 
 startGame();

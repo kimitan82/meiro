@@ -27,15 +27,22 @@
           <button id="new-game" class="new-game-button" type="button">新しい迷路</button>
         </div>
 
-        <div class="maze-wrap">
-          <canvas id="maze" aria-label="迷路"></canvas>
-          <div id="message" class="message" role="status" aria-live="polite">
-            矢印キーまたは下のボタンで移動
+        <div class="maze-stage">
+          <div class="maze-wrap">
+            <canvas id="maze" aria-label="迷路"></canvas>
+            <div id="message" class="message" role="status" aria-live="polite">
+              矢印キーまたは下のボタンで移動
+            </div>
           </div>
           <div id="game-over" class="game-over" role="alert" aria-live="assertive">
             <strong>GAME OVER</strong>
             <span>スクロールに追いつけませんでした</span>
             <button id="retry-game" type="button">もう一度挑戦</button>
+          </div>
+          <div id="game-clear" class="game-clear" role="alert" aria-live="assertive">
+            <strong>CLEAR!</strong>
+            <span id="clear-time">ゴールに到達しました</span>
+            <button id="clear-retry" type="button">もう一度挑戦</button>
           </div>
         </div>
 
