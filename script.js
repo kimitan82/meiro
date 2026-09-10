@@ -4,9 +4,12 @@ const timerElement = document.querySelector("#timer");
 const stepsElement = document.querySelector("#steps");
 const messageElement = document.querySelector("#message");
 const newGameButton = document.querySelector("#new-game");
+const gameOverElement = document.querySelector("#game-over");
+const retryGameButton = document.querySelector("#retry-game");
 
 const COLUMNS = 11;
 const ROWS = 45;
+const SCROLL_SPEED = 34;
 const directions = {
   up: { x: 0, y: -1, key: "top" },
   right: { x: 1, y: 0, key: "right" },
@@ -26,6 +29,8 @@ let steps;
 let startedAt;
 let finished = false;
 let timerId;
+let scrollFrameId;
+let lastScrollTime;
 
 function createMaze() {
   grid = Array.from({ length: ROWS }, (_, y) =>
@@ -94,10 +99,6 @@ function draw() {
   context.arc((player.x + 0.4) * unit, (player.y + 0.39) * unit, unit * 0.08, 0, Math.PI * 2);
   context.fill();
 
-  const viewport = canvas.parentElement;
-  const playerCenter = (player.y + 0.5) * (canvas.clientHeight / ROWS);
-  const targetScroll = playerCenter - viewport.clientHeight / 2;
-  viewport.scrollTop = Math.max(0, Math.min(targetScroll, canvas.clientHeight - viewport.clientHeight));
 }
 
 function formatTime(seconds) {
@@ -114,6 +115,9 @@ function move(directionName) {
   const nextX = player.x + direction.x;
   const nextY = player.y + direction.y;
   if (!grid[nextY]?.[nextX] || grid[nextY][nextX].wall) return;
+  const cellSize = canvas.clientHeight / ROWS;
+  const nextCellTop = nextY * cellSize;
+  if (directionName === "up" && nextCellTop < canvas.parentElement.scrollTop) return;
   player.x = nextX;
   player.y = nextY;
   steps += 1;
@@ -127,17 +131,53 @@ function move(directionName) {
   }
 }
 
+function autoScroll(timestamp) {
+  if (finished) return;
+  if (!lastScrollTime) lastScrollTime = timestamp;
+  const elapsed = (timestamp - lastScrollTime) / 1000;
+  lastScrollTime = timestamp;
+
+  const viewport = canvas.parentElement;
+  viewport.scrollTop = Math.max(0, viewport.scrollTop - SCROLL_SPEED * elapsed);
+
+  const cellSize = canvas.clientHeight / ROWS;
+  const playerTop = player.y * cellSize;
+  const viewportBottom = viewport.scrollTop + viewport.clientHeight;
+  if (playerTop >= viewportBottom) {
+    finished = true;
+    clearInterval(timerId);
+    messageElement.textContent = "ゲームオーバー！ スクロールに追いつけませんでした";
+    gameOverElement.classList.add("visible");
+    scrollFrameId = undefined;
+    return;
+  }
+
+  if (viewport.scrollTop <= 0) {
+    viewport.scrollTop = 0;
+    scrollFrameId = undefined;
+    return;
+  }
+
+  scrollFrameId = requestAnimationFrame(autoScroll);
+}
+
 function startGame() {
   clearInterval(timerId);
+  if (scrollFrameId) cancelAnimationFrame(scrollFrameId);
   createMaze();
   steps = 0;
   finished = false;
+  lastScrollTime = undefined;
+  gameOverElement.classList.remove("visible");
   startedAt = Date.now();
   stepsElement.textContent = "0";
   timerElement.textContent = "00:00";
   messageElement.textContent = "矢印キーまたは下のボタンで移動";
   resizeCanvas();
+  const viewport = canvas.parentElement;
+  viewport.scrollTop = canvas.clientHeight - viewport.clientHeight;
   timerId = setInterval(updateTimer, 1000);
+  scrollFrameId = requestAnimationFrame(autoScroll);
 }
 
 window.addEventListener("keydown", (event) => {
@@ -150,6 +190,7 @@ document.querySelectorAll(".control-button").forEach((button) => {
   button.addEventListener("click", () => move(button.dataset.direction));
 });
 newGameButton.addEventListener("click", startGame);
+retryGameButton.addEventListener("click", startGame);
 window.addEventListener("resize", resizeCanvas);
 
 startGame();

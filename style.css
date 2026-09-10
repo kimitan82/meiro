@@ -138,6 +138,45 @@ h1 {
   pointer-events: none;
 }
 
+.game-over {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  color: white;
+  background: rgba(15, 23, 42, 0.82);
+  text-align: center;
+}
+
+.game-over.visible {
+  display: grid;
+}
+
+.game-over strong {
+  color: #fda4af;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  letter-spacing: 0.08em;
+}
+
+.game-over span {
+  font-size: 0.9rem;
+}
+
+.game-over button {
+  margin-top: 8px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  color: #172554;
+  background: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
 .controls {
   display: grid;
   grid-template-columns: repeat(3, 52px);
