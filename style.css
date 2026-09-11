@@ -95,6 +95,10 @@ h1 {
   white-space: nowrap;
 }
 
+.coin-stat strong {
+  color: #d97706;
+}
+
 .new-game-button {
   margin-left: auto;
   padding: 11px 16px;

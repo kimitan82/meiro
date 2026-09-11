@@ -11,12 +11,14 @@ const clearTimeElement = document.querySelector("#clear-time");
 const clearRetryButton = document.querySelector("#clear-retry");
 const itemsElement = document.querySelector("#items");
 const useItemButton = document.querySelector("#use-item");
+const coinsElement = document.querySelector("#coins");
 
 const COLUMNS = 9;
 const ROWS = 45;
 const SCROLL_SPEED = 34;
 const MAX_ITEMS = 3;
 const PLAZA_COUNT = 5;
+const CHEST_COUNT = 8;
 const directions = {
   up: { x: 0, y: -1, key: "top" },
   right: { x: 1, y: 0, key: "right" },
@@ -40,6 +42,8 @@ let scrollFrameId;
 let lastScrollTime;
 let goalY;
 let items;
+let coins;
+let chests;
 
 function createMaze() {
   grid = Array.from({ length: ROWS }, (_, y) =>
@@ -114,6 +118,22 @@ function createMaze() {
   }
 
   player = { x: 1, y: ROWS - 2, facing: "right" };
+  const chestContents = ["coin", "wallBreaker", "empty"];
+  const openCells = grid.flat().filter((cell) => !cell.wall
+    && cell.x > 0 && cell.x < COLUMNS - 1
+    && cell.y > 0 && cell.y < ROWS - 1
+    && !(cell.x === player.x && cell.y === player.y));
+  chests = [];
+  while (openCells.length && chests.length < CHEST_COUNT) {
+    const cellIndex = Math.floor(Math.random() * openCells.length);
+    const cell = openCells.splice(cellIndex, 1)[0];
+    chests.push({
+      x: cell.x,
+      y: cell.y,
+      content: chestContents[Math.floor(Math.random() * chestContents.length)],
+      opened: false,
+    });
+  }
 }
 
 function getCellSize() {
@@ -145,6 +165,17 @@ function draw() {
     if (!cell.wall) return;
     context.fillStyle = "#2563eb";
     context.fillRect(cell.x * unit, cell.y * unit, unit, unit);
+  });
+
+  chests.forEach((chest) => {
+    const chestX = chest.x * unit;
+    const chestY = chest.y * unit;
+    context.fillStyle = chest.opened ? "#a16207" : "#92400e";
+    context.fillRect(chestX + unit * 0.16, chestY + unit * 0.3, unit * 0.68, unit * 0.5);
+    context.fillStyle = chest.opened ? "#d97706" : "#f59e0b";
+    context.fillRect(chestX + unit * 0.16, chestY + unit * 0.2, unit * 0.68, unit * 0.22);
+    context.fillStyle = "#fef3c7";
+    context.fillRect(chestX + unit * 0.45, chestY + unit * 0.41, unit * 0.1, unit * 0.17);
   });
 
   context.fillStyle = "#fbbf24";
@@ -182,6 +213,34 @@ function updateItems() {
   useItemButton.disabled = finished || items === 0;
 }
 
+function updateCoins() {
+  coinsElement.textContent = coins;
+}
+
+function collectChest() {
+  const chest = chests.find((candidate) => candidate.x === player.x
+    && candidate.y === player.y && !candidate.opened);
+  if (!chest) return false;
+  if (chest.content === "wallBreaker" && items >= MAX_ITEMS) {
+    messageElement.textContent = "宝箱の壁破壊アイテムはこれ以上持てません";
+    return true;
+  }
+  chest.opened = true;
+  if (chest.content === "coin") {
+    coins += 1;
+    updateCoins();
+    messageElement.textContent = "宝箱からコインを手に入れました！";
+  } else if (chest.content === "wallBreaker") {
+    items += 1;
+    updateItems();
+    messageElement.textContent = "宝箱から壁破壊アイテムを手に入れました！";
+  } else {
+    messageElement.textContent = "宝箱は空っぽでした";
+  }
+  draw();
+  return true;
+}
+
 function formatTime(seconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
@@ -206,6 +265,9 @@ function move(directionName) {
   steps += 1;
   stepsElement.textContent = steps;
   messageElement.textContent = "ゴールまであと少し！";
+  if (!collectChest()) {
+    messageElement.textContent = "ゴールまであと少し！";
+  }
   draw();
   if (player.x === COLUMNS - 2 && player.y === goalY) {
     finished = true;
@@ -274,6 +336,7 @@ function startGame() {
   if (scrollFrameId) cancelAnimationFrame(scrollFrameId);
   createMaze();
   items = 1;
+  coins = 0;
   steps = 0;
   finished = false;
   lastScrollTime = undefined;
@@ -282,6 +345,7 @@ function startGame() {
   startedAt = Date.now();
   stepsElement.textContent = "0";
   timerElement.textContent = "00:00";
+  updateCoins();
   messageElement.textContent = "矢印キーまたは下のボタンで移動";
   updateItems();
   resizeCanvas();
