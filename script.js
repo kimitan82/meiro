@@ -34,6 +34,7 @@ let finished = false;
 let timerId;
 let scrollFrameId;
 let lastScrollTime;
+let goalY;
 
 function createMaze() {
   grid = Array.from({ length: ROWS }, (_, y) =>
@@ -80,10 +81,19 @@ function getCellSize() {
   return canvas.width / COLUMNS;
 }
 
+function updateGoalPosition() {
+  const visibleRows = canvas.clientHeight
+    ? canvas.parentElement.clientHeight / (canvas.clientHeight / ROWS)
+    : ROWS;
+  const centerRow = Math.round((visibleRows / 2 - 1) / 2) * 2 + 1;
+  goalY = Math.max(1, Math.min(ROWS - 2, centerRow));
+}
+
 function resizeCanvas() {
   const width = canvas.clientWidth * window.devicePixelRatio;
   canvas.width = width;
   canvas.height = width * ROWS / COLUMNS;
+  updateGoalPosition();
   draw();
 }
 
@@ -100,7 +110,7 @@ function draw() {
 
   context.fillStyle = "#fbbf24";
   context.beginPath();
-  context.arc((COLUMNS - 1.5) * unit, 1.5 * unit, unit * 0.27, 0, Math.PI * 2);
+  context.arc((COLUMNS - 1.5) * unit, (goalY + 0.5) * unit, unit * 0.27, 0, Math.PI * 2);
   context.fill();
   context.fillStyle = "#1d4ed8";
   context.beginPath();
@@ -136,7 +146,7 @@ function move(directionName) {
   stepsElement.textContent = steps;
   messageElement.textContent = "ゴールまであと少し！";
   draw();
-  if (player.x === COLUMNS - 2 && player.y === 1) {
+  if (player.x === COLUMNS - 2 && player.y === goalY) {
     finished = true;
     clearInterval(timerId);
     const clearTime = formatTime(Math.floor((Date.now() - startedAt) / 1000));
