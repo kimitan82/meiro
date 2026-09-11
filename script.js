@@ -9,10 +9,13 @@ const retryGameButton = document.querySelector("#retry-game");
 const gameClearElement = document.querySelector("#game-clear");
 const clearTimeElement = document.querySelector("#clear-time");
 const clearRetryButton = document.querySelector("#clear-retry");
+const itemsElement = document.querySelector("#items");
+const useItemButton = document.querySelector("#use-item");
 
 const COLUMNS = 9;
 const ROWS = 45;
 const SCROLL_SPEED = 34;
+const MAX_ITEMS = 3;
 const directions = {
   up: { x: 0, y: -1, key: "top" },
   right: { x: 1, y: 0, key: "right" },
@@ -35,6 +38,7 @@ let timerId;
 let scrollFrameId;
 let lastScrollTime;
 let goalY;
+let items;
 
 function createMaze() {
   grid = Array.from({ length: ROWS }, (_, y) =>
@@ -74,7 +78,7 @@ function createMaze() {
     next.visited = true;
     addFrontier(next);
   }
-  player = { x: 1, y: ROWS - 2 };
+  player = { x: 1, y: ROWS - 2, facing: "right" };
 }
 
 function getCellSize() {
@@ -116,11 +120,31 @@ function draw() {
   context.beginPath();
   context.arc((player.x + 0.5) * unit, (player.y + 0.5) * unit, unit * 0.29, 0, Math.PI * 2);
   context.fill();
+  const facing = directions[player.facing];
+  const playerCenterX = (player.x + 0.5) * unit;
+  const playerCenterY = (player.y + 0.5) * unit;
+  const tipX = playerCenterX + facing.x * unit * 0.39;
+  const tipY = playerCenterY + facing.y * unit * 0.39;
+  const sideX = playerCenterX - facing.x * unit * 0.12;
+  const sideY = playerCenterY - facing.y * unit * 0.12;
+  const perpendicularX = -facing.y * unit * 0.16;
+  const perpendicularY = facing.x * unit * 0.16;
+  context.fillStyle = "#fef3c7";
+  context.beginPath();
+  context.moveTo(tipX, tipY);
+  context.lineTo(sideX + perpendicularX, sideY + perpendicularY);
+  context.lineTo(sideX - perpendicularX, sideY - perpendicularY);
+  context.closePath();
+  context.fill();
   context.fillStyle = "white";
   context.beginPath();
   context.arc((player.x + 0.4) * unit, (player.y + 0.39) * unit, unit * 0.08, 0, Math.PI * 2);
   context.fill();
+}
 
+function updateItems() {
+  itemsElement.textContent = `${items} / ${MAX_ITEMS}`;
+  useItemButton.disabled = finished || items === 0;
 }
 
 function formatTime(seconds) {
@@ -134,6 +158,8 @@ function updateTimer() {
 function move(directionName) {
   if (finished) return;
   const direction = directions[directionName];
+  player.facing = directionName;
+  draw();
   const nextX = player.x + direction.x;
   const nextY = player.y + direction.y;
   if (!grid[nextY]?.[nextX] || grid[nextY][nextX].wall) return;
@@ -153,7 +179,28 @@ function move(directionName) {
     messageElement.textContent = `クリア！ ${clearTime}`;
     clearTimeElement.textContent = `${clearTime} でゴールに到達しました`;
     gameClearElement.classList.add("visible");
+    updateItems();
   }
+}
+
+function useItem() {
+  if (finished || items === 0) return;
+  const direction = directions[player.facing];
+  const target = grid[player.y + direction.y]?.[player.x + direction.x];
+  if (!target || target.x === 0 || target.x === COLUMNS - 1
+    || target.y === 0 || target.y === ROWS - 1) {
+    messageElement.textContent = "ここには壊せる壁がありません";
+    return;
+  }
+  if (!target.wall) {
+    messageElement.textContent = "正面に壁がありません";
+    return;
+  }
+  target.wall = false;
+  items -= 1;
+  updateItems();
+  messageElement.textContent = "壁を壊しました！";
+  draw();
 }
 
 function autoScroll(timestamp) {
@@ -173,6 +220,7 @@ function autoScroll(timestamp) {
     clearInterval(timerId);
     messageElement.textContent = "ゲームオーバー！ スクロールに追いつけませんでした";
     gameOverElement.classList.add("visible");
+    updateItems();
     scrollFrameId = undefined;
     return;
   }
@@ -190,6 +238,7 @@ function startGame() {
   clearInterval(timerId);
   if (scrollFrameId) cancelAnimationFrame(scrollFrameId);
   createMaze();
+  items = 1;
   steps = 0;
   finished = false;
   lastScrollTime = undefined;
@@ -199,6 +248,7 @@ function startGame() {
   stepsElement.textContent = "0";
   timerElement.textContent = "00:00";
   messageElement.textContent = "矢印キーまたは下のボタンで移動";
+  updateItems();
   resizeCanvas();
   const viewport = canvas.parentElement;
   viewport.scrollTop = canvas.clientHeight - viewport.clientHeight;
@@ -207,6 +257,11 @@ function startGame() {
 }
 
 window.addEventListener("keydown", (event) => {
+  if (event.code === "Space") {
+    event.preventDefault();
+    useItem();
+    return;
+  }
   const direction = keyDirections[event.key];
   if (!direction) return;
   event.preventDefault();
@@ -218,6 +273,7 @@ document.querySelectorAll(".control-button").forEach((button) => {
 newGameButton.addEventListener("click", startGame);
 retryGameButton.addEventListener("click", startGame);
 clearRetryButton.addEventListener("click", startGame);
+useItemButton.addEventListener("click", useItem);
 window.addEventListener("resize", resizeCanvas);
 
 startGame();

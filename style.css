@@ -69,7 +69,7 @@ h1 {
 .game-info {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   margin-bottom: 20px;
 }
 
@@ -88,6 +88,11 @@ h1 {
 .stat strong {
   font-size: 1.45rem;
   line-height: 1;
+}
+
+.item-stat strong {
+  color: var(--blue);
+  white-space: nowrap;
 }
 
 .new-game-button {
@@ -274,6 +279,45 @@ h1 {
 .down { grid-column: 2; grid-row: 2; }
 .right { grid-column: 3; grid-row: 2; }
 
+.use-item-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(100%, 260px);
+  margin: 14px auto 0;
+  padding: 11px 16px;
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  color: #1e3a8a;
+  background: #dbeafe;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.use-item-button:hover:not(:disabled),
+.use-item-button:active:not(:disabled) {
+  background: #bfdbfe;
+  transform: scale(0.98);
+}
+
+.use-item-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+kbd {
+  padding: 2px 5px;
+  border: 1px solid #93c5fd;
+  border-radius: 5px;
+  color: #1d4ed8;
+  background: white;
+  font-size: 0.68rem;
+}
+
 .hint {
   margin: 18px 0 0;
   color: var(--muted);
@@ -283,7 +327,9 @@ h1 {
 
 @media (max-width: 480px) {
   .game-shell { padding-top: 30px; }
-  .game-info { gap: 15px; }
+  .game-info { gap: 12px; }
+  .stat strong { font-size: 1.2rem; }
+  .stat-label { font-size: 0.59rem; }
   .new-game-button { padding: 10px 12px; font-size: 0.8rem; }
   .message { right: 8px; bottom: 8px; font-size: 0.63rem; }
 }

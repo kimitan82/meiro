@@ -24,6 +24,10 @@
             <span class="stat-label">STEPS</span>
             <strong id="steps">0</strong>
           </div>
+          <div class="stat item-stat">
+            <span class="stat-label">WALL BREAKERS</span>
+            <strong id="items">1 / 3</strong>
+          </div>
           <button id="new-game" class="new-game-button" type="button">新しい迷路</button>
         </div>
 
@@ -53,9 +57,13 @@
           <button class="control-button down" data-direction="down" type="button" aria-label="下へ">▼</button>
           <button class="control-button right" data-direction="right" type="button" aria-label="右へ">▶</button>
         </div>
+        <button id="use-item" class="use-item-button" type="button">
+          <span aria-hidden="true">▣</span> 正面の壁を壊す
+          <kbd>SPACE</kbd>
+        </button>
       </section>
 
-      <p class="hint">PCでは矢印キー / WASD でも操作できます</p>
+      <p class="hint">PCでは矢印キー / WASD でも操作できます。向きを変えてからスペースキーで正面の壁を壊せます</p>
     </main>
     <script src="script.js"></script>
   </body>
