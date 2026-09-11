@@ -16,6 +16,7 @@ const COLUMNS = 9;
 const ROWS = 45;
 const SCROLL_SPEED = 34;
 const MAX_ITEMS = 3;
+const PLAZA_COUNT = 5;
 const directions = {
   up: { x: 0, y: -1, key: "top" },
   right: { x: 1, y: 0, key: "right" },
@@ -78,6 +79,40 @@ function createMaze() {
     next.visited = true;
     addFrontier(next);
   }
+
+  const plazaShapes = [
+    { width: 2, height: 2 },
+    { width: 2, height: 3 },
+    { width: 3, height: 2 },
+    { width: 3, height: 3 },
+  ];
+  const candidates = [];
+  for (const shape of plazaShapes) {
+    for (let y = 2; y <= ROWS - shape.height - 1; y += 1) {
+      for (let x = 1; x <= COLUMNS - shape.width - 1; x += 1) {
+        candidates.push({ x, y, ...shape });
+      }
+    }
+  }
+  const plazas = [];
+  while (candidates.length && plazas.length < PLAZA_COUNT) {
+    const candidateIndex = Math.floor(Math.random() * candidates.length);
+    const candidate = candidates.splice(candidateIndex, 1)[0];
+    const overlaps = plazas.some((plaza) => candidate.x - 1 < plaza.x + plaza.width
+      && candidate.x + candidate.width + 1 > plaza.x
+      && candidate.y - 1 < plaza.y + plaza.height
+      && candidate.y + candidate.height + 1 > plaza.y);
+    if (overlaps) {
+      continue;
+    }
+    plazas.push(candidate);
+    for (let y = candidate.y; y < candidate.y + candidate.height; y += 1) {
+      for (let x = candidate.x; x < candidate.x + candidate.width; x += 1) {
+        grid[y][x].wall = false;
+      }
+    }
+  }
+
   player = { x: 1, y: ROWS - 2, facing: "right" };
 }
 
